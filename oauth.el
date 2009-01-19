@@ -259,11 +259,11 @@ This function is destructive"
   (let ((params (copy-sequence (oauth-request-params req))))
     (concat  
      (oauth-request-http-method req) "&"
-     (url-hexify-string-upcase (oauth-request-url req)) "&"
-     (url-hexify-string-upcase
+     (oauth-hexify-string (oauth-request-url req)) "&"
+     (oauth-hexify-string
       (mapconcat 
        (lambda (pair)
-         (concat (car pair) "=" (url-hexify-string-upcase (cdr pair))))
+         (concat (car pair) "=" (oauth-hexify-string (cdr pair))))
        (sort params
              (lambda (a b) (string< (car a) (car b))))
        "&")))))
@@ -313,24 +313,28 @@ This function dispatches to an external curl process"
 (defun oauth-headers-to-curl (headers)
   "Converts header alist (like `url-request-extra-headers') to a string that 
 can be fed to curl"
-  (mapconcat
-   (lambda (header) (concat "--header '" (car header) ": " (cdr header) "'")) headers " "))
+  (apply 
+   'append
+   (mapcar
+    (lambda (header) `("--header" 
+                       ,(concat (car header) ": " (cdr header)))) headers)))
 
 (defun oauth-curl-retrieve (url) 
   "Retrieve via curl"
   (set-buffer (generate-new-buffer "*oauth-request*"))
-  (let ((command (concat "curl -s " 
-                         (when oauth-curl-insecure "-k ")  
-                         "-i " url " " 
-                         (when oauth-post-vars-alist
-                           (concat 
-                            (mapconcat 
-                             (lambda (pair)
-                               (concat "-d " (car pair) "=" 
-                                       (url-hexify-string-upcase (cdr pair))))
-                             oauth-post-vars-alist " ") " "))
-                         (oauth-headers-to-curl url-request-extra-headers))))
-    (insert (shell-command-to-string command)))
+  (let ((curl-args `("-s" ,(when oauth-curl-insecure "-k") "-i" ,url
+                     ,@(when oauth-post-vars-alist
+                         (apply 
+                          'append
+                          (mapcar
+                           (lambda (pair)
+                             (list
+                              "-d" 
+                              (concat (car pair) "="
+                                      (oauth-hexify-string (cdr pair)))))
+                           oauth-post-vars-alist)))
+                     ,@(oauth-headers-to-curl url-request-extra-headers))))
+    (apply 'call-process "curl" nil t nil curl-args))
   (current-buffer))
 
 (defun oauth-request-to-header (req) 
@@ -345,15 +349,24 @@ be consumed by `url-request-extra-headers'."
               (lambda (pair) 
                 (format ", %s=\"%s\"" 
                         (car pair) 
-                        (url-hexify-string-upcase (cdr pair))))
+                        (oauth-hexify-string (cdr pair))))
               (sort params
                     (lambda (a b) (string< (car a) (car b))))))) '())))
 
-(defun url-hexify-string-upcase (string)
-  "The same as url-hexify-string from `url-utils.el' except the hex
-characters are upper case"
+(defconst oauth-unreserved-chars
+  '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m 
+    ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
+    ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M 
+    ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z
+    ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
+    ?- ?_ ?. ?~ )
+  "A list of characters that are _NOT_ reserved for oauth.")
+
+(defun oauth-hexify-string (string)
+  "Similar to hexify-string from `url-utils.el' except the hex
+characters are upper case and the reserved char set is slightly different."
   (mapconcat (lambda (byte)
-               (if (memq byte url-unreserved-chars)
+               (if (memq byte oauth-url-unreserved-chars)
                    (char-to-string byte)
                  (format "%%%02X" byte)))
              (if (multibyte-string-p string)
