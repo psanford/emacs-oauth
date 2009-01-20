@@ -204,7 +204,7 @@ Returns a buffer of the response."
   (let ((url-request-method "POST")
         (oauth-post-vars-alist post-vars-alist))
     (oauth-url-retrieve access-token url)))
-    
+
 (defun oauth-epoch-string ()
   "Returns a unix epoch timestamp string"
   (format "%d" (ftruncate (float-time (current-time)))))
@@ -321,7 +321,9 @@ can be fed to curl"
 (defun oauth-curl-retrieve (url) 
   "Retrieve via curl"
   (set-buffer (generate-new-buffer "*oauth-request*"))
-  (let ((curl-args `("-s" ,(when oauth-curl-insecure "-k") "-i" ,url
+  (let ((curl-args `("-s" ,(when oauth-curl-insecure "-k")
+                     "-X" ,url-request-method
+                     "-i" ,url
                      ,@(when oauth-post-vars-alist
                          (apply 
                           'append
