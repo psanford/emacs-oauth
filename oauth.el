@@ -365,7 +365,7 @@ be consumed by `url-request-extra-headers'."
   "Similar to hexify-string from `url-utils.el' except the hex
 characters are upper case and the reserved char set is slightly different."
   (mapconcat (lambda (byte)
-               (if (memq byte oauth-url-unreserved-chars)
+               (if (memq byte oauth-unreserved-chars)
                    (char-to-string byte)
                  (format "%%%02X" byte)))
              (if (multibyte-string-p string)
