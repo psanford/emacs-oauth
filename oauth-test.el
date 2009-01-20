@@ -3,7 +3,6 @@
 ;; Copyright (C) 2009 Peter Sanford
 
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
-;; Version: 1.0
 
 ;; This file is NOT part of GNU Emacs.
 
