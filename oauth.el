@@ -255,10 +255,13 @@ This function is destructive"
 
 (defun oauth-build-signature-basestring-hmac-sha1 (req)
   "Returns the base string for the hmac-sha1 signing function"
-  (let ((params (copy-sequence (oauth-request-params req))))
+  (let ((base-url (oauth-extract-base-url req))
+         (params (append 
+                  (oauth-extract-url-params req)
+                  (copy-sequence (oauth-request-params req)))))
     (concat  
      (oauth-request-http-method req) "&"
-     (oauth-hexify-string (oauth-request-url req)) "&"
+     (oauth-hexify-string base-url) "&"
      (oauth-hexify-string
       (mapconcat 
        (lambda (pair)
@@ -266,6 +269,23 @@ This function is destructive"
        (sort params
              (lambda (a b) (string< (car a) (car b))))
        "&")))))
+
+(defun oauth-extract-base-url (req)
+  "Returns just the base url.
+
+For example: http://example.com?param=1 returns http://example.com"
+  (let ((url (oauth-request-url req)))
+    (if (string-match "\\([^?]+\\)" url)
+        (match-string 1 url)
+      url)))
+
+(defun oauth-extract-url-params (req)
+  "Returns an alist of param name . param value from the url"
+  (let ((url (oauth-request-url req)))
+    (when (string-match (regexp-quote "?") url)
+      (mapcar (lambda (pair) 
+                `(,(car pair) . ,(cadr pair)))
+              (url-parse-query-string (substring url (match-end 0)))))))
 
 (defun oauth-fetch-token (req)
   "Fetches a token based on the given request object"

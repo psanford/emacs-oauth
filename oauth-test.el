@@ -85,6 +85,18 @@
      "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0"
      (oauth-build-signature-basestring-hmac-sha1 req)))))
 
+(ert-deftest hmac-sha1-base-string-with-url-params ()
+  (let ((req (make-oauth-request 
+              :http-method "POST"
+              :url "http://term.ie/oauth/example/request_token.php?id=1234&other_param=true"
+              :params '(("oauth_consumer_key" . "k&ey")
+                        ("oauth_timestamp" . "1231020688")
+                        ("oauth_nonce" . "064f679764ac13d475e674672c106322")
+                        ("oauth_version" . "1.0")
+                        ("oauth_signature_method" . "HMAC-SHA1")))))
+    (should (equal
+     "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&id%3D1234%26oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0%26other_param%3Dtrue"
+     (oauth-build-signature-basestring-hmac-sha1 req)))))
 
 (ert-deftest hmac-sha1-request-signature ()
   (let ((req (make-oauth-request
