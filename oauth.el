@@ -340,7 +340,8 @@ can be fed to curl"
 
 (defun oauth-curl-retrieve (url) 
   "Retrieve via curl"
-  (set-buffer (generate-new-buffer "*oauth-request*"))
+  (url-gc-dead-buffers)
+  (set-buffer (generate-new-buffer " *oauth-request*"))
   (let ((curl-args `("-s" ,(when oauth-curl-insecure "-k")
                      "-X" ,url-request-method
                      "-i" ,url
@@ -356,6 +357,7 @@ can be fed to curl"
                            oauth-post-vars-alist)))
                      ,@(oauth-headers-to-curl url-request-extra-headers))))
     (apply 'call-process "curl" nil t nil curl-args))
+  (url-mark-buffer-as-dead (current-buffer))
   (current-buffer))
 
 (defun oauth-request-to-header (req) 
