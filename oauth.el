@@ -53,7 +53,9 @@
 ;; Post takes an additional parameter post-vars-alist which is a 
 ;; list of key val pairs to be used in a x-www-form-urlencoded message.
 
-;; yammer.el Is included as a simple reference app using oauth.el
+;; yammer.el:
+;; http://github.com/psanford/emacs-yammer/tree/master is an example
+;; mode that uses oauth.el
 
 ;;; Dependencies:
 
