@@ -3,6 +3,8 @@
 ;; Copyright (C) 2009 Peter Sanford
 
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
+;; Version: 1.01
+;; Keywords: comm
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -36,7 +38,7 @@
 ;; In order for an application to use oauth it needs a key and secret 
 ;; issued by the service provider. 
 
-;;; Usage:
+;; Usage:
 
 ;; Obtain access token:
 
@@ -57,7 +59,7 @@
 ;; http://github.com/psanford/emacs-yammer/tree/master is an example
 ;; mode that uses oauth.el
 
-;;; Dependencies:
+;; Dependencies:
 
 ;; The default behavior of oauth.el is to dispatch to curl for http
 ;; communication. It is strongly recommended that you use curl.
@@ -68,6 +70,8 @@
 
 ;; oauth.el uses hmac-sha1 library for generating signatures. An implementation
 ;; by Derek Upham is included for convenience. 
+
+;;; Code:
 
 (require 'url)
 (require 'url-util)
@@ -131,7 +135,7 @@ It is generally recomended that you use curl for your requests.")
 (defvar oauth-post-vars-alist nil
   "Alist containing key/vals for POSTing (x-www-form-urlencoded) requests.")
 
-(defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url)
+(defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url &optional access-callback)
   "Authorize application. 
 
 CONSUMER-KEY and CONSUMER-SECRET are the key and secret issued by the 
@@ -145,7 +149,9 @@ it has recieved an unauthorized token.
 This will fetch an unauthorized token, prompt the user to authorize this
 application and the fetch the authorized token.
 
-Returns an oauth-access-token if everything was successful."
+Returns an oauth-access-token if everything was successful.
+
+An optional ACCESS-CALLBACK can be specified which can make changes to the access url."
   (let ((auth-t) (auth-req) (unauth-t) (auth-url)
         (unauth-req (oauth-sign-request-hmac-sha1
                      (oauth-make-request request-url consumer-key) 
@@ -157,6 +163,7 @@ Returns an oauth-access-token if everything was successful."
     (read-string (concat 
                   "Please authorize this application by visiting: " auth-url
                   " \nPress enter once you have done so: "))
+    (if access-callback (funcall access-callback))
     (setq auth-req 
           (oauth-sign-request-hmac-sha1
            (oauth-make-request access-url consumer-key unauth-t) 
@@ -400,3 +407,5 @@ characters are upper case and the reserved char set is slightly different."
              ""))
 
 (provide 'oauth)
+
+;;; oauth.el ends here
