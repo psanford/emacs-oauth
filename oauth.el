@@ -5,6 +5,8 @@
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
 ;; Version: 1.01
 ;; Keywords: comm
+;; Contributors:
+;;     Anthony Garcia <lagg@lavabit.com>
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -306,7 +308,11 @@ For example: http://example.com?param=1 returns http://example.com"
   (let ((token (make-oauth-t)))
     (set-buffer (oauth-do-request req))
     (goto-char (point-min))
-    (delete-region (point-min) (search-forward "\n\n"))
+    (let ((linebreak (search-forward "\n\n" nil t nil)))
+      (when linebreak
+        (delete-region (point-min) linebreak)))
+    (goto-char (point-max))
+    (delete-region (point-min) (+ (search-backward "\r\n") 2))
     (loop for pair in (mapcar (lambda (str) (split-string str "="))
                               (split-string 
                                (buffer-substring (point-min) (point-max)) "&")) 
