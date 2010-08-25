@@ -46,7 +46,5 @@ make sure you have gnutls-bin installed.
 oauth.el uses hmac-sha1 library for generating signatures. An implementation
 by Derek Upham is included for convenience. 
 
-Due to a vulnerability in OAuth Core 1.0: http://oauth.net/advisories/2009-1
-some vendors are using a modified spec. To handle these cases
-oauth-authorize-app no takes an optional callback to handle that extra work.
-See the emacs-yammer mode as an example.
+This library assumes that you are using the oauth_verifier method
+described in the 1.0a spec.
