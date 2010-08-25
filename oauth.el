@@ -32,7 +32,7 @@
 ;; requests. Currently it only supports HMAC-SHA1, although adding
 ;; additional signature methods should be relatively straight forward. 
 
-;; Visit http://oauth.net/core/1.0 for the complete oauth spec.
+;; Visit http://oauth.net/core/1.0a for the complete oauth spec.
 
 ;; Oauth requires the client application to receive user authorization in order
 ;; to access restricted content on behalf of the user. This allows for 
@@ -73,10 +73,8 @@
 ;; oauth.el uses hmac-sha1 library for generating signatures. An implementation
 ;; by Derek Upham is included for convenience. 
 
-;; Due to a vulnerability in OAuth Core 1.0: http://oauth.net/advisories/2009-1
-;; some vendors are using a modified spec. To handle these cases
-;; oauth-authorize-app no takes an optional callback to handle that extra work.
-;; See the emacs-yammer mode as an example.
+;; This library assumes that you are using the oauth_verifier method
+;; described in the 1.0a spec.
 
 ;;; Code:
 
@@ -142,7 +140,7 @@ It is generally recomended that you use curl for your requests.")
 (defvar oauth-post-vars-alist nil
   "Alist containing key/vals for POSTing (x-www-form-urlencoded) requests.")
 
-(defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url &optional access-callback)
+(defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url)
   "Authorize application. 
 
 CONSUMER-KEY and CONSUMER-SECRET are the key and secret issued by the 
@@ -156,10 +154,8 @@ it has recieved an unauthorized token.
 This will fetch an unauthorized token, prompt the user to authorize this
 application and the fetch the authorized token.
 
-Returns an oauth-access-token if everything was successful.
-
-An optional ACCESS-CALLBACK can be specified which can make changes to the access url."
-  (let ((auth-t) (auth-req) (unauth-t) (auth-url)
+Returns an oauth-access-token if everything was successful."
+  (let ((auth-t) (auth-req) (unauth-t) (auth-url) (access-token)
         (unauth-req (oauth-sign-request-hmac-sha1
                      (oauth-make-request request-url consumer-key) 
                      consumer-secret)))
@@ -170,10 +166,13 @@ An optional ACCESS-CALLBACK can be specified which can make changes to the acces
     (read-string (concat 
                   "Please authorize this application by visiting: " auth-url
                   " \nPress enter once you have done so: "))
-    (if access-callback (funcall access-callback))
-    (setq auth-req 
+    (setq access-token (read-string
+                        "Please enter the provided code: "))
+    (setq auth-req
           (oauth-sign-request-hmac-sha1
-           (oauth-make-request access-url consumer-key unauth-t) 
+           (oauth-make-request
+            (concat access-url "?oauth_verifier=" access-token)
+            consumer-key unauth-t)
            consumer-secret))
     (setq auth-t (oauth-fetch-token auth-req))
     (make-oauth-access-token :consumer-key consumer-key
