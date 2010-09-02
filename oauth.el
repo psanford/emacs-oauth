@@ -203,8 +203,8 @@ oauth headers."
                                        (oauth-request-to-header req)))
           (url-request-method (oauth-request-http-method req)))
       (cond 
-       (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)))
        (async-callback (url-retrieve (oauth-request-url req) async-callback))
+       (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)))
        (t (url-retrieve-synchronously (oauth-request-url req)))))))
     
 (defun oauth-fetch-url (access-token url)
