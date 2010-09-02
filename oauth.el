@@ -184,7 +184,7 @@ Returns an oauth-access-token if everything was successful."
                              :consumer-secret consumer-secret
                              :auth-t auth-t)))
 
-(defun oauth-url-retrieve (access-token url &optional async-callback)
+(defun oauth-url-retrieve (access-token url &optional async-callback cb-data)
   "Like url retrieve, with url-request-extra-headers set to the necessary
 oauth headers."
   (let ((req (oauth-make-request 
@@ -203,7 +203,8 @@ oauth headers."
                                        (oauth-request-to-header req)))
           (url-request-method (oauth-request-http-method req)))
       (cond 
-       (async-callback (url-retrieve (oauth-request-url req) async-callback))
+       (async-callback (url-retrieve (oauth-request-url req)
+                                     async-callback cb-data))
        (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)))
        (t (url-retrieve-synchronously (oauth-request-url req)))))))
     
