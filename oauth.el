@@ -3,7 +3,7 @@
 ;; Copyright (C) 2009 Peter Sanford
 
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
-;; Version: 1.01
+;; Version: 1.02
 ;; Keywords: comm
 ;; Contributors:
 ;;     Anthony Garcia <lagg@lavabit.com>
@@ -140,6 +140,11 @@ It is generally recomended that you use curl for your requests.")
 (defvar oauth-post-vars-alist nil
   "Alist containing key/vals for POSTing (x-www-form-urlencoded) requests.")
 
+(defvar oauth-callback-url "oob"
+  "Callback url for the server to redirect the client after the client authorizes the application. 
+
+This is mainly intended for web apps. Most client side apps will use 'oob' instead of a url.")
+
 (defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url)
   "Authorize application. 
 
@@ -240,6 +245,7 @@ oauth-request objects directly"
                       :params `(("oauth_consumer_key" . ,consumer-key)
                                 ("oauth_timestamp" . ,(oauth-epoch-string))
                                 ("oauth_nonce" . ,(oauth-make-nonce))
+                                ("oauth_callback" . ,oauth-callback-url)
                                 ("oauth_version" . "1.0"))))
 
 ;; HMAC-SHA1 specific code
