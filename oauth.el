@@ -205,9 +205,10 @@ oauth headers."
                                        (oauth-request-to-header req)))
           (url-request-method (oauth-request-http-method req)))
       (cond 
+       (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)
+					    async-callback cb-data))
        (async-callback (url-retrieve (oauth-request-url req)
                                      async-callback cb-data))
-       (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)))
        (t (url-retrieve-synchronously (oauth-request-url req)))))))
     
 (defun oauth-fetch-url (access-token url)
@@ -366,27 +367,63 @@ can be fed to curl"
     (lambda (header) `("--header" 
                        ,(concat (car header) ": " (cdr header)))) headers)))
 
-(defun oauth-curl-retrieve (url) 
+(defun oauth-curl-filter (proc string)
+  "Output filter function for curl."
+  (with-current-buffer (process-buffer proc)
+    (let ((moving (= (point) (process-mark proc))))
+      (save-excursion
+	;; Insert the text, advancing the process marker.
+	(goto-char (process-mark proc))
+	(insert string)
+	(set-marker (process-mark proc) (point)))
+      (if moving (goto-char (process-mark proc))))))
+
+(defun oauth-curl-sentinel (proc status)
+  "Sentinel function for curl. Call the callback procedure
+associated with the process."
+  (when (eq (process-status proc) 'exit)
+    (with-current-buffer (process-buffer proc)
+      (save-excursion
+	(goto-char 0)
+	(when (search-forward "\r\n\r\n" nil t)
+	  (let ((header-end (point)))
+	    (goto-char 0)
+	    (while (search-forward "\r\n" header-end t)
+	      (replace-match "\n" t t)))))
+      (let ((callback (process-get proc 'oauth-callback))
+	    (cbargs (process-get proc 'oauth-cbargs)))
+	(when callback
+	  (apply callback nil cbargs))
+	(url-mark-buffer-as-dead (current-buffer))))))
+
+(defun oauth-curl-retrieve (url &optional callback cbargs)
   "Retrieve via curl"
   (url-gc-dead-buffers)
-  (set-buffer (generate-new-buffer " *oauth-request*"))
-  (let ((curl-args `("-s" ,(when oauth-curl-insecure "-k")
-                     "-X" ,url-request-method
-                     "-i" ,url
-                     ,@(when oauth-post-vars-alist
-                         (apply 
-                          'append
-                          (mapcar
-                           (lambda (pair)
-                             (list
-                              "-d" 
-                              (concat (car pair) "="
-                                      (oauth-hexify-string (cdr pair)))))
-                           oauth-post-vars-alist)))
-                     ,@(oauth-headers-to-curl url-request-extra-headers))))
-    (apply 'call-process "curl" nil t nil curl-args))
-  (url-mark-buffer-as-dead (current-buffer))
-  (current-buffer))
+  (let ((proc-buffer (generate-new-buffer " *oauth-request*"))
+	(curl-args `("-s" ,(when oauth-curl-insecure "-k")
+		     "-X" ,url-request-method
+		     "-i" ,url
+		     ,@(when oauth-post-vars-alist
+			 (apply
+			  'append
+			  (mapcar
+			   (lambda (pair)
+			     (list
+			      "-d"
+			      (concat (car pair) "="
+				      (oauth-hexify-string (cdr pair)))))
+			   oauth-post-vars-alist)))
+		     ,@(oauth-headers-to-curl url-request-extra-headers))))
+    (if (null callback)
+	(apply 'call-process "curl" nil proc-buffer nil curl-args)
+      (let ((proc (apply 'start-process "oauth-curl" proc-buffer
+			 "curl" curl-args)))
+	(set-process-filter proc 'oauth-curl-filter)
+	(set-process-sentinel proc 'oauth-curl-sentinel)
+	(when callback
+	  (process-put proc 'oauth-callback callback)
+	  (process-put proc 'oauth-cbargs cbargs))))
+    proc-buffer))
 
 (defun oauth-request-to-header (req) 
   "Given a requst will return a alist of header pairs. This can
