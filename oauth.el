@@ -194,22 +194,32 @@ oauth headers."
               (oauth-access-token-consumer-key access-token)
               (oauth-access-token-auth-t access-token))))
     (setf (oauth-request-http-method req) (or url-request-method "GET"))
-    (when oauth-post-vars-alist 
-      (setf (oauth-request-params req)
-            (append (oauth-request-params req) oauth-post-vars-alist)))
-    (oauth-sign-request-hmac-sha1
-     req (oauth-access-token-consumer-secret access-token))
-    (let ((url-request-extra-headers (if url-request-extra-headers 
-                                         (append url-request-extra-headers 
-                                                 (oauth-request-to-header req))
-                                       (oauth-request-to-header req)))
-          (url-request-method (oauth-request-http-method req)))
-      (cond 
-       (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)
-					    async-callback cb-data))
-       (async-callback (url-retrieve (oauth-request-url req)
-                                     async-callback cb-data))
-       (t (url-retrieve-synchronously (oauth-request-url req)))))))
+    (let ((oauth-post-vars-alist oauth-post-vars-alist))
+      (when url-request-data
+	(setq oauth-post-vars-alist
+	      (append oauth-post-vars-alist
+		      (mapcar (lambda (pair)
+				(let ((parts (split-string pair "=")))
+				  (cons (oauth-unhex-string (car parts))
+					(oauth-unhex-string (cadr parts)))))
+			      (split-string url-request-data "&")))))
+      (when oauth-post-vars-alist
+	(setf (oauth-request-params req)
+	      (append (oauth-request-params req) oauth-post-vars-alist)))
+      (oauth-sign-request-hmac-sha1
+       req (oauth-access-token-consumer-secret access-token))
+      (let ((url-request-extra-headers
+	     (if url-request-extra-headers
+		 (append url-request-extra-headers
+			 (oauth-request-to-header req))
+	       (oauth-request-to-header req)))
+	    (url-request-method (oauth-request-http-method req)))
+	(cond
+	 (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)
+					      async-callback cb-data))
+	 (async-callback (url-retrieve (oauth-request-url req)
+				       async-callback cb-data))
+	 (t (url-retrieve-synchronously (oauth-request-url req))))))))
     
 (defun oauth-fetch-url (access-token url)
   "Wrapper around url-retrieve-synchronously using the the authorized-token
@@ -470,6 +480,26 @@ characters are upper case and the reserved char set is slightly different."
                  (encode-coding-string string 'utf-8)
                string)
              ""))
+
+(defun oauth-unhex-string (str)
+  "Remove %XX, embedded spaces, etc. in a URL-encoded UTF-8 string.
+
+This function handles multibyte strings correctly and is suitable
+for decoding strings encoded with `url-hexify-string'."
+  (setq str (or str ""))
+  (let ((tmp "")
+	(case-fold-search t))
+    (while (string-match "%[0-9A-Fa-f][0-9A-Fa-f]" str)
+      (let* ((start (match-beginning 0))
+	     (ch1 (url-unhex (elt str (+ start 1))))
+	     (code (+ (* 16 ch1)
+		      (url-unhex (elt str (+ start 2))))))
+	(setq tmp (concat
+		   tmp (substring str 0 start)
+		   (char-to-string (unibyte-char-to-multibyte code)))
+	      str (substring str (match-end 0)))))
+    (setq tmp (concat tmp str))
+    (decode-coding-string tmp 'utf-8)))
 
 (provide 'oauth)
 
