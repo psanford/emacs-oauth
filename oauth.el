@@ -401,9 +401,9 @@ associated with the process."
 	    (setq err
 		  (list :error
 			(list 'error 'http (match-string 1))))))
+	(url-mark-buffer-as-dead (current-buffer))
 	(when callback
-	  (apply callback err cbargs))
-	(url-mark-buffer-as-dead (current-buffer))))))
+	  (apply callback err cbargs))))))
 
 (defun oauth-curl-retrieve (url &optional callback cbargs)
   "Retrieve via curl"
