@@ -3,10 +3,12 @@
 ;; Copyright (C) 2009 Peter Sanford
 
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
-;; Version: 1.02
+;; Version: 1.03
 ;; Keywords: comm
 ;; Contributors:
 ;;     Anthony Garcia <lagg@lavabit.com>
+;;     Leo Shidai Liu <github.com/leoliu>
+;;     Neil Roberts <bpeeluk@yahoo.co.uk>
 
 ;; This file is NOT part of GNU Emacs.
 
