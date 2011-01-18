@@ -391,9 +391,18 @@ associated with the process."
 	    (while (search-forward "\r\n" header-end t)
 	      (replace-match "\n" t t)))))
       (let ((callback (process-get proc 'oauth-callback))
-	    (cbargs (process-get proc 'oauth-cbargs)))
+	    (cbargs (process-get proc 'oauth-cbargs))
+	    err)
+	(save-excursion
+	  (goto-char 0)
+	  (when (and (search-forward-regexp "^HTTP/[0-9.]+ \\([0-9]+\\)"
+					    nil t)
+		     (not (string= (match-string 1) "200")))
+	    (setq err
+		  (list :error
+			(list 'error 'http (match-string 1))))))
 	(when callback
-	  (apply callback nil cbargs))
+	  (apply callback err cbargs))
 	(url-mark-buffer-as-dead (current-buffer))))))
 
 (defun oauth-curl-retrieve (url &optional callback cbargs)
