@@ -83,6 +83,7 @@
 (require 'url)
 (require 'url-util)
 (require 'hmac-sha1)
+(require 'hex-util)
 
 (defvar oauth-nonce-function nil
 "Fuction used to generate nonce.
