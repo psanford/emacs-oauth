@@ -32,15 +32,15 @@
 ;; This is oauth client library implementation in elisp. It is
 ;; capable of authenticating (receiving an access token) and signing
 ;; requests. Currently it only supports HMAC-SHA1, although adding
-;; additional signature methods should be relatively straight forward. 
+;; additional signature methods should be relatively straight forward.
 
 ;; Visit http://oauth.net/core/1.0a for the complete oauth spec.
 
 ;; Oauth requires the client application to receive user authorization in order
-;; to access restricted content on behalf of the user. This allows for 
+;; to access restricted content on behalf of the user. This allows for
 ;; authenticated communication without jeopardizing the user's password.
-;; In order for an application to use oauth it needs a key and secret 
-;; issued by the service provider. 
+;; In order for an application to use oauth it needs a key and secret
+;; issued by the service provider.
 
 ;; Usage:
 
@@ -51,12 +51,12 @@
 ;; You will use this token for all subsequent requests. In many cases
 ;; it will make sense to serialize this token and reuse it for future sessions.
 ;; At this time, that functionality is left to the application developers to
-;; implement (see yammer.el for an example of token serialization). 
+;; implement (see yammer.el for an example of token serialization).
 
 ;; Two helper functions are provided to handle authenticated requests:
-;; (oauth-fetch-url) and (oauth-post-url) 
+;; (oauth-fetch-url) and (oauth-post-url)
 ;; Both take the access-token and a url.
-;; Post takes an additional parameter post-vars-alist which is a 
+;; Post takes an additional parameter post-vars-alist which is a
 ;; list of key val pairs to be used in a x-www-form-urlencoded message.
 
 ;; yammer.el:
@@ -73,7 +73,7 @@
 ;; make sure you have gnutls-bin installed.
 
 ;; oauth.el uses hmac-sha1 library for generating signatures. An implementation
-;; by Derek Upham is included for convenience. 
+;; by Derek Upham is included for convenience.
 
 ;; This library assumes that you are using the oauth_verifier method
 ;; described in the 1.0a spec.
@@ -95,7 +95,7 @@ Use (sasl-unique-id) if available otherwise oauth-internal-make-nonce")
   (require 'cl)
 
   ;; Sad hack: There are two different implementations of hmac-sha1
-  ;; One by Derek Upham (included with oauth), 
+  ;; One by Derek Upham (included with oauth),
   ;; and one by Shuhei KOBAYASHI (in the FLIM package).
   ;; Both functions work but they have different parameter orderings.
   ;; To deal with this we have this nice test to figure out which one
@@ -126,7 +126,7 @@ request information (url and http-method)."
 (defstruct oauth-access-token
   consumer-key consumer-secret auth-t)
 
-(defvar oauth-enable-browse-url t 
+(defvar oauth-enable-browse-url t
   "Specifies whether or not to use call browse-url for authorizing apps.
 
 Disabling is useful for remote machines.
@@ -144,19 +144,19 @@ It is generally recomended that you use curl for your requests.")
   "Alist containing key/vals for POSTing (x-www-form-urlencoded) requests.")
 
 (defvar oauth-callback-url "oob"
-  "Callback url for the server to redirect the client after the client authorizes the application. 
+  "Callback url for the server to redirect the client after the client authorizes the application.
 
 This is mainly intended for web apps. Most client side apps will use 'oob' instead of a url.")
 
 (defun oauth-authorize-app (consumer-key consumer-secret request-url access-url authorize-url)
-  "Authorize application. 
+  "Authorize application.
 
-CONSUMER-KEY and CONSUMER-SECRET are the key and secret issued by the 
-service provider. 
+CONSUMER-KEY and CONSUMER-SECRET are the key and secret issued by the
+service provider.
 
 REQUEST-URL is the url to request an unauthorized token.
 ACCESS-URL is the url to request an access token.
-AUTHORIZE-URL is the url that oauth.el should redirect the user to once 
+AUTHORIZE-URL is the url that oauth.el should redirect the user to once
 it has recieved an unauthorized token.
 
 This will fetch an unauthorized token, prompt the user to authorize this
@@ -165,13 +165,13 @@ application and the fetch the authorized token.
 Returns an oauth-access-token if everything was successful."
   (let ((auth-t) (auth-req) (unauth-t) (auth-url) (access-token)
         (unauth-req (oauth-sign-request-hmac-sha1
-                     (oauth-make-request request-url consumer-key) 
+                     (oauth-make-request request-url consumer-key)
                      consumer-secret)))
     (setq unauth-t (oauth-fetch-token unauth-req))
-    (setq auth-url (format "%s?oauth_token=%s" 
+    (setq auth-url (format "%s?oauth_token=%s"
                            authorize-url (oauth-t-token unauth-t)))
     (if oauth-enable-browse-url (browse-url auth-url))
-    (read-string (concat 
+    (read-string (concat
                   "Please authorize this application by visiting: " auth-url
                   " \nPress enter once you have done so: "))
     (setq access-token (read-string
@@ -190,27 +190,27 @@ Returns an oauth-access-token if everything was successful."
 (defun oauth-url-retrieve (access-token url &optional async-callback cb-data)
   "Like url retrieve, with url-request-extra-headers set to the necessary
 oauth headers."
-  (let ((req (oauth-make-request 
+  (let ((req (oauth-make-request
               url
               (oauth-access-token-consumer-key access-token)
               (oauth-access-token-auth-t access-token))))
     (setf (oauth-request-http-method req) (or url-request-method "GET"))
-    (when oauth-post-vars-alist 
+    (when oauth-post-vars-alist
       (setf (oauth-request-params req)
             (append (oauth-request-params req) oauth-post-vars-alist)))
     (oauth-sign-request-hmac-sha1
      req (oauth-access-token-consumer-secret access-token))
-    (let ((url-request-extra-headers (if url-request-extra-headers 
-                                         (append url-request-extra-headers 
+    (let ((url-request-extra-headers (if url-request-extra-headers
+                                         (append url-request-extra-headers
                                                  (oauth-request-to-header req))
                                        (oauth-request-to-header req)))
           (url-request-method (oauth-request-http-method req)))
-      (cond 
+      (cond
        (async-callback (url-retrieve (oauth-request-url req)
                                      async-callback cb-data))
        (oauth-use-curl (oauth-curl-retrieve (oauth-request-url req)))
        (t (url-retrieve-synchronously (oauth-request-url req)))))))
-    
+
 (defun oauth-fetch-url (access-token url)
   "Wrapper around url-retrieve-synchronously using the the authorized-token
 to authenticate.
@@ -242,7 +242,7 @@ Returns a buffer of the response."
 (defun oauth-make-request (url consumer-key &optional token)
   "Generates a oauth-request object with default values
 
-Most consumers should call this function instead of creating 
+Most consumers should call this function instead of creating
 oauth-request objects directly"
   (make-oauth-request :url url
                       :token token
@@ -254,7 +254,7 @@ oauth-request objects directly"
 
 ;; HMAC-SHA1 specific code
 (defun oauth-sign-request-hmac-sha1 (req secret)
-  "Adds signature and signature_method to req. 
+  "Adds signature and signature_method to req.
 
 This function is destructive"
   (let ((token (oauth-request-token req)))
@@ -266,13 +266,13 @@ This function is destructive"
     (push `("oauth_signature" . ,(oauth-build-signature-hmac-sha1 req secret))
           (oauth-request-params req)))
   req)
-  
+
 (defun oauth-build-signature-hmac-sha1 (req secret)
   "Returns the signature for the given request object"
   (let* ((token (oauth-request-token req))
          (key (concat secret "&" (when token (oauth-t-token-secret token))))
-         (hmac-params 
-          (list (encode-coding-string key 'utf-8 t) 
+         (hmac-params
+          (list (encode-coding-string key 'utf-8 t)
                 (encode-coding-string
                  (oauth-build-signature-basestring-hmac-sha1 req) 'utf-8 t))))
     (if oauth-hmac-sha1-param-reverse (setq hmac-params (reverse hmac-params)))
@@ -281,14 +281,14 @@ This function is destructive"
 (defun oauth-build-signature-basestring-hmac-sha1 (req)
   "Returns the base string for the hmac-sha1 signing function"
   (let ((base-url (oauth-extract-base-url req))
-         (params (append 
+         (params (append
                   (oauth-extract-url-params req)
                   (copy-sequence (oauth-request-params req)))))
-    (concat  
+    (concat
      (oauth-request-http-method req) "&"
      (oauth-hexify-string base-url) "&"
      (oauth-hexify-string
-      (mapconcat 
+      (mapconcat
        (lambda (pair)
          (concat (car pair) "=" (oauth-hexify-string (cdr pair))))
        (sort params
@@ -308,7 +308,7 @@ For example: http://example.com?param=1 returns http://example.com"
   "Returns an alist of param name . param value from the url"
   (let ((url (oauth-request-url req)))
     (when (string-match (regexp-quote "?") url)
-      (mapcar (lambda (pair) 
+      (mapcar (lambda (pair)
                 `(,(car pair) . ,(cadr pair)))
               (url-parse-query-string (substring url (match-end 0)))))))
 
@@ -325,13 +325,13 @@ For example: http://example.com?param=1 returns http://example.com"
       (when line-end
         (delete-region (point-min) (+ line-end 2))))
     (loop for pair in (mapcar (lambda (str) (split-string str "="))
-                              (split-string 
-                               (buffer-substring (point-min) (point-max)) "&")) 
+                              (split-string
+                               (buffer-substring (point-min) (point-max)) "&"))
           do
-          (cond 
+          (cond
            ((equal (car pair) "oauth_token_secret")
             (setf (oauth-t-token-secret token) (cadr pair)))
-           ((equal (car pair) "oauth_token") 
+           ((equal (car pair) "oauth_token")
             (setf (oauth-t-token token) (cadr pair)))))
     token))
 
@@ -352,7 +352,7 @@ This function uses the emacs function `url-retrieve' for the http connection."
 
 (defun oauth-do-request-curl (req)
   "Make an http request to url using the request object to generate the oauth
-headers. Returns the http response buffer. 
+headers. Returns the http response buffer.
 
 This function dispatches to an external curl process"
 
@@ -361,15 +361,15 @@ This function dispatches to an external curl process"
   (oauth-curl-retrieve (oauth-request-url req))))
 
 (defun oauth-headers-to-curl (headers)
-  "Converts header alist (like `url-request-extra-headers') to a string that 
+  "Converts header alist (like `url-request-extra-headers') to a string that
 can be fed to curl"
-  (apply 
+  (apply
    'append
    (mapcar
-    (lambda (header) `("--header" 
+    (lambda (header) `("--header"
                        ,(concat (car header) ": " (cdr header)))) headers)))
 
-(defun oauth-curl-retrieve (url) 
+(defun oauth-curl-retrieve (url)
   "Retrieve via curl"
   (url-gc-dead-buffers)
   (set-buffer (generate-new-buffer " *oauth-request*"))
@@ -377,12 +377,12 @@ can be fed to curl"
                      "-X" ,url-request-method
                      "-i" ,url
                      ,@(when oauth-post-vars-alist
-                         (apply 
+                         (apply
                           'append
                           (mapcar
                            (lambda (pair)
                              (list
-                              "-d" 
+                              "-d"
                               (concat (car pair) "="
                                       (oauth-hexify-string (cdr pair)))))
                            oauth-post-vars-alist)))
@@ -391,7 +391,7 @@ can be fed to curl"
   (url-mark-buffer-as-dead (current-buffer))
   (current-buffer))
 
-(defun oauth-request-to-header (req) 
+(defun oauth-request-to-header (req)
   "Given a requst will return a alist of header pairs. This can
 be consumed by `url-request-extra-headers'."
   (let ((params (copy-sequence (oauth-request-params req))))
@@ -400,17 +400,17 @@ be consumed by `url-request-extra-headers'."
       "Authorization"
       (apply 'concat "OAuth realm=\"\""
              (mapcar
-              (lambda (pair) 
-                (format ", %s=\"%s\"" 
-                        (car pair) 
+              (lambda (pair)
+                (format ", %s=\"%s\""
+                        (car pair)
                         (oauth-hexify-string (cdr pair))))
               (sort params
                     (lambda (a b) (string< (car a) (car b))))))) '())))
 
 (defconst oauth-unreserved-chars
-  '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m 
+  '(?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m
     ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
-    ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M 
+    ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M
     ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z
     ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
     ?- ?_ ?. ?~ )

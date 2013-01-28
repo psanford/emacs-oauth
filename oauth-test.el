@@ -22,19 +22,19 @@
 ;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
-;; 
+;;
 ;; This file contains tests for oauth.el. Currently the tests cover
 ;; the generation of HMAC-SHA1 signatures.
-;; 
+;;
 ;; The test data is taken from http://term.ie/oauth/example/
 
 (require 'ert)
 (require 'oauth)
 
 (ert-deftest oauth-make-request ()
-  (let ((req (oauth-make-request "Mercurochrome-knocked" 
+  (let ((req (oauth-make-request "Mercurochrome-knocked"
                                  "behave-retaking"
-                                 (make-oauth-t 
+                                 (make-oauth-t
                                   :token "pearlier-Wallace\'s"
                                   :token-secret "Asunción-yuccas"))))
     (should (oauth-request-p req))
@@ -71,9 +71,9 @@
 ;; [base_string] => GET&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_consumer_key%3Dkey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0
 ;; results in signature:
 ;; [oauth_signature] => grs+SdPE0DTE2+KYdlBXVk4Z+jc=
-  
+
 (ert-deftest hmac-sha1-base-string ()
-  (let ((req (make-oauth-request 
+  (let ((req (make-oauth-request
               :http-method "POST"
               :url "http://term.ie/oauth/example/request_token.php"
               :params '(("oauth_consumer_key" . "k&ey")
@@ -86,7 +86,7 @@
      (oauth-build-signature-basestring-hmac-sha1 req)))))
 
 (ert-deftest hmac-sha1-base-string-with-url-params ()
-  (let ((req (make-oauth-request 
+  (let ((req (make-oauth-request
               :http-method "POST"
               :url "http://term.ie/oauth/example/request_token.php?id=1234&other_param=true"
               :params '(("oauth_consumer_key" . "k&ey")
@@ -143,7 +143,7 @@
 ;;     [base_string] => GET&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D25c105a828aaef0837213304376d95e6%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231121320%26oauth_token%3Drequestkey%26oauth_version%3D1.0
 
 (ert-deftest sign-request-with-token-hmac-sha1()
-  (let ((req (make-oauth-request 
+  (let ((req (make-oauth-request
                :url "http://term.ie/oauth/example/request_token.php"
                :params '(("oauth_consumer_key" . "k&ey")
                          ("oauth_version" . "1.0")
