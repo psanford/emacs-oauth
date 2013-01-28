@@ -3,7 +3,7 @@
 ;; Copyright (C) 2009 Peter Sanford
 
 ;; Author: Peter Sanford <peter AT petersdanceparty.com>
-;; Version: 1.03
+;; Version: 1.04
 ;; Keywords: comm
 ;; Contributors:
 ;;     Anthony Garcia <lagg@lavabit.com>
