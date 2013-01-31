@@ -85,30 +85,34 @@
 (require 'hmac-sha1)
 (require 'hex-util)
 
+(eval-when-compile
+  (require 'cl))
+
+(defvar oauth-hmac-sha1-param-reverse nil)
+(setq oauth-hmac-sha1-param-reverse
+      (eval-when-compile
+	;; Sad hack: There are two different implementations of hmac-sha1
+	;; One by Derek Upham (included with oauth),
+	;; and one by Shuhei KOBAYASHI (in the FLIM package).
+	;; Both functions work but they have different parameter orderings.
+	;; To deal with this we have this nice test to figure out which one
+	;; is actually available to us. Hopefully things will *just work*.
+	(when (equal
+	       (encode-hex-string (hmac-sha1 "Hi There" (make-string 20 ?\x0b)))
+	       "b617318655057264e28bc0b6fb378c8ef146be00")
+	  t)))
+
 (defvar oauth-nonce-function nil
-"Fuction used to generate nonce.
+  "Fuction used to generate nonce.
 
 Use (sasl-unique-id) if available otherwise oauth-internal-make-nonce")
 
-(defvar oauth-hmac-sha1-param-reverse nil)
-(eval-when-compile
-  (require 'cl)
-
-  ;; Sad hack: There are two different implementations of hmac-sha1
-  ;; One by Derek Upham (included with oauth),
-  ;; and one by Shuhei KOBAYASHI (in the FLIM package).
-  ;; Both functions work but they have different parameter orderings.
-  ;; To deal with this we have this nice test to figure out which one
-  ;; is actually available to us. Hopefully things will *just work*.
-  (when (equal
-         (encode-hex-string (hmac-sha1 "Hi There" (make-string 20 ?\x0b)))
-         "b617318655057264e28bc0b6fb378c8ef146be00")
-    (setq oauth-hmac-sha1-param-reverse t))
-
-  ;; Use sasl if available, otherwise make the nonce ourselves
-  (if (require 'sasl nil t)
-      (setq oauth-nonce-function #'sasl-unique-id)
-    (setq oauth-nonce-function #'oauth-internal-make-nonce)))
+(setq oauth-nonce-function
+      (eval-when-compile
+	;; Use sasl if available, otherwise make the nonce ourselves
+	(if (require 'sasl nil t)
+	    #'sasl-unique-id
+	  #'oauth-internal-make-nonce)))
 
 (defstruct oauth-request
   "Container for request information.
