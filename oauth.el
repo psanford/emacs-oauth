@@ -107,10 +107,11 @@
 
 Use (sasl-unique-id) if available otherwise oauth-internal-make-nonce")
 
+(require 'sasl nil t)
 (setq oauth-nonce-function
       (eval-when-compile
 	;; Use sasl if available, otherwise make the nonce ourselves
-	(if (require 'sasl nil t)
+	(if (featurep 'sasl)
 	    #'sasl-unique-id
 	  #'oauth-internal-make-nonce)))
 
