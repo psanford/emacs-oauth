@@ -86,7 +86,7 @@
 (require 'hex-util)
 
 (defvar oauth-nonce-function nil
-"Fuction used to generate nonce.
+  "Fuction used to generate nonce.
 
 Use (sasl-unique-id) if available otherwise oauth-internal-make-nonce")
 
@@ -281,9 +281,9 @@ This function is destructive"
 (defun oauth-build-signature-basestring-hmac-sha1 (req)
   "Returns the base string for the hmac-sha1 signing function"
   (let ((base-url (oauth-extract-base-url req))
-         (params (append
-                  (oauth-extract-url-params req)
-                  (copy-sequence (oauth-request-params req)))))
+        (params (append
+                 (oauth-extract-url-params req)
+                 (copy-sequence (oauth-request-params req)))))
     (concat
      (oauth-request-http-method req) "&"
      (oauth-hexify-string base-url) "&"
@@ -348,7 +348,7 @@ headers. Returns the http response buffer.
 This function uses the emacs function `url-retrieve' for the http connection."
   (let ((url-request-extra-headers (oauth-request-to-header req))
         (url-request-method (oauth-request-http-method req)))
-  (url-retrieve-synchronously (oauth-request-url req))))
+    (url-retrieve-synchronously (oauth-request-url req))))
 
 (defun oauth-do-request-curl (req)
   "Make an http request to url using the request object to generate the oauth
@@ -358,7 +358,7 @@ This function dispatches to an external curl process"
 
   (let ((url-request-extra-headers (oauth-request-to-header req))
         (url-request-method (oauth-request-http-method req)))
-  (oauth-curl-retrieve (oauth-request-url req))))
+    (oauth-curl-retrieve (oauth-request-url req))))
 
 (defun oauth-headers-to-curl (headers)
   "Converts header alist (like `url-request-extra-headers') to a string that

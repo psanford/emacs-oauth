@@ -57,8 +57,8 @@
                         ("oauth_version" . "1.0")
                         ("oauth_token" . "highballs-Croesus")))))
     (should (equal
-     '(("Authorization" . "OAuth realm=\"\", oauth_consumer_key=\"choleric-decolletes\", oauth_nonce=\"0123456789\", oauth_signature=\"dont_tell%26\", oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\"1229298753\", oauth_token=\"highballs-Croesus\", oauth_version=\"1.0\""))
-     (oauth-request-to-header req)))))
+             '(("Authorization" . "OAuth realm=\"\", oauth_consumer_key=\"choleric-decolletes\", oauth_nonce=\"0123456789\", oauth_signature=\"dont_tell%26\", oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\"1229298753\", oauth_token=\"highballs-Croesus\", oauth_version=\"1.0\""))
+             (oauth-request-to-header req)))))
 
 ;; HMAC-SHA1 request
 ;; [oauth_version] => 1.0
@@ -82,8 +82,8 @@
                         ("oauth_version" . "1.0")
                         ("oauth_signature_method" . "HMAC-SHA1")))))
     (should (equal
-     "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0"
-     (oauth-build-signature-basestring-hmac-sha1 req)))))
+             "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0"
+             (oauth-build-signature-basestring-hmac-sha1 req)))))
 
 (ert-deftest hmac-sha1-base-string-with-url-params ()
   (let ((req (make-oauth-request
@@ -95,8 +95,8 @@
                         ("oauth_version" . "1.0")
                         ("oauth_signature_method" . "HMAC-SHA1")))))
     (should (equal
-     "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&id%3D1234%26oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0%26other_param%3Dtrue"
-     (oauth-build-signature-basestring-hmac-sha1 req)))))
+             "POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&id%3D1234%26oauth_consumer_key%3Dk%2526ey%26oauth_nonce%3D064f679764ac13d475e674672c106322%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1231020688%26oauth_version%3D1.0%26other_param%3Dtrue"
+             (oauth-build-signature-basestring-hmac-sha1 req)))))
 
 (ert-deftest hmac-sha1-request-signature ()
   (let ((req (make-oauth-request
@@ -108,8 +108,8 @@
                         ("oauth_signature_method" . "HMAC-SHA1"))))
         (secret "secret"))
     (should (equal
-     "grs+SdPE0DTE2+KYdlBXVk4Z+jc="
-     (oauth-build-signature-hmac-sha1 req secret)))))
+             "grs+SdPE0DTE2+KYdlBXVk4Z+jc="
+             (oauth-build-signature-hmac-sha1 req secret)))))
 
 (ert-deftest sign-request-hmac-sha1 ()
   (let ((req (make-oauth-request
@@ -121,11 +121,11 @@
         (secret "secret"))
     (oauth-sign-request-hmac-sha1 req secret)
     (should (equal
-     "HMAC-SHA1"
-     (cdr (assoc "oauth_signature_method" (oauth-request-params req)))))
+             "HMAC-SHA1"
+             (cdr (assoc "oauth_signature_method" (oauth-request-params req)))))
     (should (equal
-     "grs+SdPE0DTE2+KYdlBXVk4Z+jc="
-     (cdr (assoc "oauth_signature" (oauth-request-params req)))))))
+             "grs+SdPE0DTE2+KYdlBXVk4Z+jc="
+             (cdr (assoc "oauth_signature" (oauth-request-params req)))))))
 
 
 ;;     [parameters:private] => Array
@@ -144,18 +144,18 @@
 
 (ert-deftest sign-request-with-token-hmac-sha1()
   (let ((req (make-oauth-request
-               :url "http://term.ie/oauth/example/request_token.php"
-               :params '(("oauth_consumer_key" . "k&ey")
-                         ("oauth_version" . "1.0")
-                         ("oauth_nonce" . "25c105a828aaef0837213304376d95e6")
-                         ("oauth_timestamp" . "1231121320"))
-               :token (make-oauth-t :token "requestkey"
-                                    :token-secret "requestsecret")))
-         (secret "secret"))
+              :url "http://term.ie/oauth/example/request_token.php"
+              :params '(("oauth_consumer_key" . "k&ey")
+                        ("oauth_version" . "1.0")
+                        ("oauth_nonce" . "25c105a828aaef0837213304376d95e6")
+                        ("oauth_timestamp" . "1231121320"))
+              :token (make-oauth-t :token "requestkey"
+                                   :token-secret "requestsecret")))
+        (secret "secret"))
     (oauth-sign-request-hmac-sha1 req secret)
     (should (equal
-     "HMAC-SHA1"
-     (cdr (assoc "oauth_signature_method" (oauth-request-params req)))))
+             "HMAC-SHA1"
+             (cdr (assoc "oauth_signature_method" (oauth-request-params req)))))
     (should (equal
-     "TatnsMj+1RF5LzRS1/i3IeQQ21g="
-     (cdr (assoc "oauth_signature" (oauth-request-params req)))))))
+             "TatnsMj+1RF5LzRS1/i3IeQQ21g="
+             (cdr (assoc "oauth_signature" (oauth-request-params req)))))))
